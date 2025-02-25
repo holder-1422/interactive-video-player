@@ -32,6 +32,10 @@ MANIFEST
 *.manifest
 *.spec
 
+/videos/
+/images/
+
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
@@ -169,3 +173,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+*.egg-info/
+.vscode/
