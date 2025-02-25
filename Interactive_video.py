@@ -1,6 +1,6 @@
 ########################################################################
 # Interactive Video player
-# Version v2.9.10 (YAML version) –
+# Version v2.9.11 (YAML version) –
 # Date 02/24/2025
 # Created By Jeremy Holder (Modified by ChatGPT)
 ########################################################################
@@ -22,125 +22,52 @@ def resource_path(relative_path):
 
 class InteractiveVideoApp:
     def __init__(self, root, config_file):
+        """Initialize the interactive video player app."""
         self.root = root
         self.root.title("Interactive Video Player")
-        
-        # Load configuration from YAML file.
-        try:
-            config_path = resource_path(config_file)
-            with open(config_path, "r") as f:
-                self.config = yaml.safe_load(f)
-        except Exception as e:
-            print("Failed to load configuration:", e)
-            self.config = {}
-        
-        # Initialize VLC with Direct3D9 and disable hardware acceleration.
-        self.instance = vlc.Instance("--no-xlib", "--file-caching=2000", "--network-caching=2000",
-                                     "--vout=direct3d9", "--avcodec-hw=none")
+        self.config_file = config_file
+    
+        # Initialize VLC player instance
+        self.instance = vlc.Instance("--no-xlib")
         self.player = self.instance.media_player_new()
-        
-        
-        # Attach VLC end-of-video event after initializing the media player
-        self.event_manager = self.player.event_manager()
-        self.event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.on_video_end)
-        
-        # Configure root window using grid.
-        self.root.rowconfigure(0, weight=1)
-        self.root.rowconfigure(1, weight=0)
-        self.root.columnconfigure(0, weight=1)
-        
-        # Main frame (contains video and options)
-        self.main_frame = tk.Frame(root)
-        self.main_frame.grid(row=0, column=0, sticky="nsew")
-        
-        # Options frame on the left (fixed width)
-        self.options_frame = tk.Frame(self.main_frame, width=250)
-        self.options_frame.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
-        self.options_frame.pack_propagate(False)
-        
-        # Video container frame on the right.
-        self.video_container = tk.Frame(self.main_frame, bg="black")
+    
+        # Main video container setup
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+    
+        # Video container where the video will be rendered
+        self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+    
         # Attach the interrupt overlays directly to the video container
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-        self.interrupt_fg.place_forget()  # Hidden until needed
-        
+        self.interrupt_fg.place_forget()  # Hide until needed
+    
         self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-        self.interrupt_bg.place_forget()  # Hidden until needed
-        
-        
-        # Initialize cq_options_frame
+        self.interrupt_bg.place_forget()  # Hide until needed
+    
+        # Continue/Question overlay setup
         self.cq_options_frame = tk.Frame(self.video_container, bg='white')
-        self.cq_options_frame.place_forget()
-        
-        
-        # Video frame inside the container (for video output)
-        self.video_frame = tk.Frame(self.video_container, bg="black")
-        self.video_frame.pack(fill=tk.BOTH, expand=True)
-        
-        # Create a Toplevel for the semi-transparent background overlay.
-        self.interrupt_bg = tk.Frame(self.video_container, bg='white')
-        self.interrupt_bg.attributes("-alpha", 0.7)  # 70% opaque background
-        self.interrupt_bg.attributes("-topmost", True)
-        self.interrupt_bg.configure(bg='gray')
-        
-        # Create a Toplevel for the fully opaque interruption choices.
-        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-        self.interrupt_fg.attributes("-topmost", True)
-        self.interrupt_fg.configure(bg='white')
-        
-        # Normal section for non-temporary choices in the options_frame.
-        self.normal_section = tk.Frame(self.options_frame)
-        self.normal_section.pack(side=tk.TOP, fill=tk.X)
-        
-        # Permanent controls frame at the bottom of options.
-        self.options_controls_frame = tk.Frame(self.options_frame)
-        self.options_controls_frame.pack(side="bottom", fill="x")
-        self.left_pause_button = tk.Button(self.options_controls_frame, text="Pause", command=self.toggle_pause)
-        self.left_pause_button.pack(pady=5)
-        
-        # Bottom frame for seek bar, pause/play, volume, and mute.
-        self.bottom_frame = tk.Frame(root)
-        self.bottom_frame.grid(row=1, column=0, sticky="ew")
-        self.bottom_frame.columnconfigure(0, weight=1)
-        self.bottom_frame.columnconfigure(1, weight=0)
-        self.bottom_frame.columnconfigure(2, weight=0)
-        self.bottom_frame.columnconfigure(3, weight=0)
-        
-        self.seek_var = tk.DoubleVar()
-        self.seek_slider = Scale(self.bottom_frame, from_=0, to=100, orient="horizontal",
-                                 variable=self.seek_var, command=self.seek_video)
-        self.seek_slider.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-        
-        self.is_paused = False
-        self.pause_button = tk.Button(self.bottom_frame, text="Pause", command=self.toggle_pause)
-        self.pause_button.grid(row=0, column=1, padx=5, pady=5)
-        
-        self.volume_var = tk.IntVar(value=100)
-        self.volume_slider = Scale(self.bottom_frame, from_=0, to=100, orient="horizontal",
-                                   variable=self.volume_var, command=self.set_volume, label="Volume")
-        self.volume_slider.grid(row=0, column=2, padx=5, pady=5)
-        
-        self.is_muted = False
-        self.mute_button = tk.Button(self.bottom_frame, text="Mute", command=self.toggle_mute)
-        self.mute_button.grid(row=0, column=3, padx=5, pady=5)
-        
+        self.cq_options_frame.place_forget()  # Hide until needed
+    
+        # Load configuration from YAML
+        self.load_config()
+    
+        # Set up other initial values
         self.current_video = self.config.get("start", "")
-        self.resume_video = None  # Holds the base scene ID.
-        self.resume_time = 0      # Holds the playback time of the base video.
-        
-        self.skip_button = None  # For skipping interruptions.
-        self.image_refs = []     # To hold image references.
-        
-        # Initialize interrupt attributes to prevent errors
-        self.interrupt_fg = None
-        self.interrupt_bg = None
-        
-        
-        # Start playing video and set up overlays.
+        self.resume_video = None
+        self.resume_time = 0
+    
+        # Event manager for VLC to detect when video ends
+        self.event_manager = self.player.event_manager()
+        self.event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.on_video_end)
+    
+        # Start playing the first video
         self.play_video()
-        # Periodically update overlay positions.
+    
+        # Start periodic overlay updates
         self.periodic_update_overlay()
+    
         
 
 
