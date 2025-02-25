@@ -1,6 +1,6 @@
 ########################################################################
 # Interactive Video player
-# Version v2.9.13 (YAML version) –
+# Version v2.9.14 (YAML version) –
 # Date 02/24/2025
 # Created By Jeremy Holder (Modified by ChatGPT)
 ########################################################################
@@ -211,13 +211,16 @@ class InteractiveVideoApp:
             scene_type = self.get_scene_type()
             print(f"[DEBUG] Scene type detected: {scene_type}")
             if scene_type in ["continue", "question"]:
+                print("[DEBUG] Scene type detected as continue/question. Showing overlay.")
                 self.show_cq_options_overlay()
             elif scene_type == "main":
+                print("[DEBUG] Scene type detected as main. Showing main options overlay.")
                 self.show_main_options_overlay()
             else:
                 print("[DEBUG] Unknown scene type. Showing normal section.")
                 self.clear_subframes()
                 self.show_normal_section()
+            
     
     def clear_interrupt_overlays(self):
         """Clear interrupt overlays attached to the video player."""
@@ -252,7 +255,26 @@ class InteractiveVideoApp:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
     
+    def clear_all_overlays(self):
+        """Clear all overlays from the video player."""
+        print("[DEBUG] Clearing all overlays.")
     
+        # Clear Continue/Question overlay
+        if self.cq_options_frame:
+            self.cq_options_frame.place_forget()
+            print("[DEBUG] Hiding cq_options_frame.")
+    
+        # Clear interrupt overlays
+        if self.interrupt_fg:
+            self.interrupt_fg.place_forget()
+            self.interrupt_fg = None
+            print("[DEBUG] Hiding interrupt_fg.")
+    
+        if self.interrupt_bg:
+            self.interrupt_bg.place_forget()
+            self.interrupt_bg = None
+            print("[DEBUG] Hiding interrupt_bg.")
+       
 
     
     
@@ -434,7 +456,11 @@ class InteractiveVideoApp:
         if self.interrupt_fg is not None:
             for widget in list(self.interrupt_fg.winfo_children()):
                 widget.destroy()
-            self.interrupt_fg.withdraw()
+            # Correct way to hide a Frame using place_forget()
+            if self.interrupt_fg:
+                self.interrupt_fg.place_forget()
+                print("[DEBUG] Hiding interrupt_fg using place_forget()")
+            
     
         if self.interrupt_bg is not None:
             self.interrupt_bg.withdraw()
@@ -628,11 +654,13 @@ class InteractiveVideoApp:
     
         if next_scene:
             if option.get("temporary", False):
+                # Handle temporary choices
                 if self.resume_video is None:
                     self.resume_video = self.current_video
                     self.resume_time = self.player.get_time()
                 self.current_video = next_scene
             else:
+                # Handle regular scene transition
                 self.current_video = next_scene
                 self.resume_video = None
                 self.resume_time = 0
@@ -641,6 +669,7 @@ class InteractiveVideoApp:
             self.play_video()
         else:
             print("[DEBUG] No next scene defined in option.")
+    
             
     def toggle_play_pause(self):
         """Toggle play and pause for the VLC player."""
