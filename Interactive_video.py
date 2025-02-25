@@ -89,7 +89,9 @@ class InteractiveVideoApp:
         # Initialize normal_section for main scenes
         self.normal_section = None
 
-
+        # Skip button for interruptions
+        self.skip_button = None  # Initialize skip button placeholder
+        
         # VLC Control Bar
         self.control_frame = tk.Frame(self.root, bg='gray')
         self.control_frame.pack(side=tk.BOTTOM, fill=tk.X)
@@ -168,7 +170,9 @@ class InteractiveVideoApp:
                 button = self.create_option_button(button_frame, text, option)
                 button.grid(row=0, column=idx, padx=10, pady=10)
     
+        # Reveal the overlay after setup
         self.root.after(100, self._reveal_cq_overlay)
+        
     
     
     
@@ -365,11 +369,11 @@ class InteractiveVideoApp:
         self.player.audio_set_mute(self.is_muted)
         self.mute_button.config(text="Unmute" if self.is_muted else "Mute")
     
-    def play_video(self, start_time=None):
+    def play_video(self, resume_time=None):
         """Play the video and set up VLC event detection."""
         self.clear_interrupt_overlays()
         self.clear_subframes()
-        
+    
         video_path = resource_path(self.config.get("videos", {}).get(self.current_video, ""))
         if video_path and os.path.exists(video_path):
             media = self.instance.media_new(video_path)
@@ -385,27 +389,20 @@ class InteractiveVideoApp:
             self.set_volume(self.volume_var.get())
             self.root.after(500, self.adjust_window_size)
     
-            # Trigger overlay detection periodically
-            self.root.after(500, self.update_seek_bar)
+            # Resume video from the correct timestamp if applicable
+            if resume_time is not None:
+                self.player.pause()
+                self.root.after(50, lambda: self.player.set_time(resume_time))
+                self.root.after(100, lambda: self.player.play())
     
-            if self.get_scene_type() == "main":
-                self.show_normal_section()
-    
-            base_scene = self.resume_video if self.resume_video else self.current_video
-            if self.temporary_choices_exist(base_scene):
-                self.show_interrupt_section(scene_id=base_scene)
-                if self.resume_video:
-                    self.ensure_skip_button()
+            # Ensure skip button is available if we're resuming an interruption
+            if self.resume_video:
+                self.ensure_skip_button()
             else:
                 self.hide_skip_button()
-                self.clear_interrupt_overlays()
-    
-            if start_time is not None:
-                self.player.pause()
-                self.root.after(50, lambda: self.player.set_time(start_time))
-                self.root.after(100, lambda: self.player.play())
         else:
             messagebox.showerror("Error", f"Video file not found: {video_path}")
+    
     
     
     def adjust_window_size(self):
@@ -463,7 +460,7 @@ class InteractiveVideoApp:
             
     
         if self.interrupt_bg is not None:
-            self.interrupt_bg.withdraw()
+            self.interrupt_bg.place_forget()
     
 
     
@@ -602,7 +599,26 @@ class InteractiveVideoApp:
         else:
             print("[DEBUG] No temporary choices found, clearing overlays.")
             self.clear_interrupt_overlays()
-     
+
+    def ensure_skip_button(self):
+        """Ensure the skip interruption button exists and is visible."""
+        if not self.skip_button or not self.skip_button.winfo_exists():
+            print("[DEBUG] Initializing skip button.")
+            self.skip_button = tk.Button(
+                self.control_frame, text="Skip Interruption",
+                command=self.skip_interrupt
+            )
+            self.skip_button.pack(side=tk.RIGHT)
+
+    def skip_interrupt(self):
+        """Skip the interruption and resume the base video."""
+        print("[DEBUG] Skip interruption button clicked.")
+        if self.resume_video:
+            self.clear_all_overlays()
+            self.current_video = self.resume_video
+            self.resume_video = None
+            self.play_video(resume_time=self.resume_time)
+       
     
     
     def show_normal_section(self):
