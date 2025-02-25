@@ -43,6 +43,8 @@ class InteractiveVideoApp:
         self.video_frame = tk.Frame(self.video_container, bg='black')
         self.video_frame.pack(fill=tk.BOTH, expand=True)
         
+        # Initialize volume control
+        self.volume_var = tk.IntVar(value=100)  # Set default volume to 100%
     
         # Attach the interrupt overlays directly to the video container
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
@@ -304,8 +306,10 @@ class InteractiveVideoApp:
         self.left_pause_button.config(text=new_text)
     
     def set_volume(self, value):
+        """Set the VLC player's volume."""
         volume = int(value)
         self.player.audio_set_volume(volume)
+    
     
     def toggle_mute(self):
         self.is_muted = not self.is_muted
