@@ -69,7 +69,19 @@ class InteractiveVideoApp:
         self.periodic_update_overlay()
     
         
-
+    def load_config(self):
+        """Load the video configuration from the YAML file."""
+        try:
+            with open(self.config_file, 'r') as file:
+                self.config = yaml.safe_load(file)
+                print(f"[DEBUG] Successfully loaded configuration from {self.config_file}")
+        except FileNotFoundError:
+            print(f"[ERROR] Config file not found: {self.config_file}")
+            self.config = {}
+        except yaml.YAMLError as e:
+            print(f"[ERROR] Error parsing YAML config: {e}")
+            self.config = {}
+    
 
     def show_cq_options_overlay(self):
         """Display a centered overlay for Continue/Question scenes attached to the video container after the video ends."""
