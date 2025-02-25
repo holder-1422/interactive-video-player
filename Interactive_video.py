@@ -89,8 +89,16 @@ class InteractiveVideoApp:
         # Initialize normal_section for main scenes
         self.normal_section = None
 
+
         # Skip button for interruptions
-        self.skip_button = None  # Initialize skip button placeholder
+        self.skip_button = tk.Button(
+            self.control_frame, text="Skip Interruption",
+            command=self.skip_interrupt
+        )
+        self.skip_button.pack(side=tk.RIGHT)
+        self.skip_button.place_forget()  # Hide initially
+        print("[DEBUG] Initialized skip_button and hidden by default")
+
         
         # VLC Control Bar
         self.control_frame = tk.Frame(self.root, bg='gray')
@@ -388,6 +396,14 @@ class InteractiveVideoApp:
             self.player.play()
             self.set_volume(self.volume_var.get())
             self.root.after(500, self.adjust_window_size)
+            # Ensure skip button is available if we're resuming an interruption
+            if self.resume_video:
+                print("[DEBUG] Resuming from interruption, showing skip button.")
+                self.ensure_skip_button()
+            else:
+                print("[DEBUG] No interruption, hiding skip button.")
+                self.hide_skip_button()
+            
     
             # Resume video from the correct timestamp if applicable
             if resume_time is not None:
@@ -421,15 +437,17 @@ class InteractiveVideoApp:
             self.play_video()
     
     def hide_skip_button(self):
+        """Hide the skip interruption button if it exists."""
         if self.skip_button and self.skip_button.winfo_exists():
-            self.skip_button.destroy()
-            self.skip_button = None
+            self.skip_button.place_forget()
+            print("[DEBUG] Skip button hidden.")
+    
     
     def ensure_skip_button(self):
         if not self.skip_button or not self.skip_button.winfo_exists():
             self.skip_button = tk.Button(self.interrupt_fg, text="Skip Interruption",
                                           command=self.skip_interrupt, wraplength=230)
-            self.skip_button.pack(pady=10)
+            self.skip_button.place(relx=0.85, rely=0.9)  # Position near the bottom-right
     
     def skip_interrupt(self):
         if self.resume_video:
