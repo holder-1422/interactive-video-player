@@ -121,14 +121,17 @@ class InteractiveVideoApp:
         self.skip_button = None  # For skipping interruptions.
         self.image_refs = []     # To hold image references.
         
+        # Initialize interrupt attributes to prevent errors
+        self.interrupt_fg = None
+        self.interrupt_bg = None
+        
+        
         # Start playing video and set up overlays.
         self.play_video()
         # Periodically update overlay positions.
         self.periodic_update_overlay()
         
-        # Initialize interrupt attributes to prevent errors
-        self.interrupt_fg = None
-        self.interrupt_bg = None
+
 
     def show_cq_options_overlay(self):
         """Display a centered overlay for Continue/Question scenes attached to the video container after the video ends."""
@@ -259,12 +262,14 @@ class InteractiveVideoApp:
     def clear_interrupt_overlays(self):
         """Safely clear temporary interrupt overlays."""
         if self.interrupt_fg:
-            self.interrupt_fg.withdraw()
+            self.interrupt_fg.place_forget()
             self.interrupt_fg = None
     
         if self.interrupt_bg:
-            self.interrupt_bg.withdraw()
+            self.interrupt_bg.place_forget()
             self.interrupt_bg = None
+    
+        
     
     
     def periodic_update_overlay(self):
@@ -424,17 +429,28 @@ class InteractiveVideoApp:
         self.image_refs = []
     
     def clear_subframes(self):
-        for frame in (self.normal_section,):
-            for widget in list(frame.winfo_children()):
-                try:
-                    widget.destroy()
-                except:
-                    pass
-        for widget in list(self.interrupt_fg.winfo_children()):
+        """Clear any subframes including interrupt overlays."""
+        if self.interrupt_fg:
             try:
-                widget.destroy()
-            except:
-                pass
+                for widget in list(self.interrupt_fg.winfo_children()):
+                    widget.destroy()
+            except Exception as e:
+                print(f"[DEBUG] Error clearing interrupt_fg widgets: {e}")
+    
+        if self.interrupt_bg:
+            try:
+                self.interrupt_fg.withdraw()
+                self.interrupt_bg.withdraw()
+            except Exception as e:
+                print(f"[DEBUG] Error withdrawing interrupt overlays: {e}")
+    
+        # Clear any other subframes if necessary
+        if hasattr(self, 'cq_options_frame'):
+            try:
+                self.cq_options_frame.destroy()
+            except Exception as e:
+                print(f"[DEBUG] Error clearing cq_options_frame: {e}")
+
     
     def update_seek_bar(self):
         if self.player.get_length() > 0:
@@ -524,26 +540,33 @@ class InteractiveVideoApp:
         self.create_option_button(frame, text, option)
     
     def show_interrupt_section(self, scene_id=None):
-        for widget in list(self.interrupt_fg.winfo_children()):
-            try:
-                widget.destroy()
-            except:
-                pass
+        """Display interrupt options as an overlay."""
+        if not self.interrupt_fg or not self.interrupt_bg:
+            # Re-initialize if not already set
+            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+            self.interrupt_fg.place_forget()
+    
+            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+            self.interrupt_bg.place_forget()
+    
         if scene_id is None:
             scene_id = self.current_video
+    
         options_data = self.config.get("options", {}).get(scene_id, {})
-        heading = options_data.get("interrupt_heading", "")
-        if heading:
-            lbl = tk.Label(self.interrupt_fg, text=heading,
-                           font=("Arial", 14, "bold"), wraplength=230, bg='white')
-            lbl.pack(pady=5)
         choices = options_data.get("choices", {})
+    
+        for widget in list(self.interrupt_fg.winfo_children()):
+            widget.destroy()
+    
         for text, option in choices.items():
             if option.get("temporary", False):
-                self.create_option_frame(text, option, self.interrupt_fg)
-        self.ensure_skip_button()
-        self.interrupt_fg.deiconify()
-        self.update_interrupt_geometry()
+                button = self.create_option_button(self.interrupt_fg, text, option)
+                button.pack(padx=5, pady=5)
+    
+        # Display the interrupt overlay
+        self.interrupt_bg.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.interrupt_fg.place(relx=0.75, rely=0.1, width=200, height=300)  # Position it on the right
+    
     
     def show_normal_section(self):
         for widget in list(self.normal_section.winfo_children()):
@@ -580,24 +603,20 @@ class InteractiveVideoApp:
     
         if next_scene:
             if option.get("temporary", False):
-                # Handle temporary choices (interrupts)
                 if self.resume_video is None:
                     self.resume_video = self.current_video
                     self.resume_time = self.player.get_time()
                 self.current_video = next_scene
             else:
-                # Handle regular scene transition
                 self.current_video = next_scene
                 self.resume_video = None
                 self.resume_time = 0
     
-            # Clear all overlays before transitioning
             self.clear_all_overlays()
-    
-            # Play the next scene
             self.play_video()
         else:
             print("[DEBUG] No next scene defined in option.")
+    
     
     
     
