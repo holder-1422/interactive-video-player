@@ -59,9 +59,12 @@ class InteractiveVideoApp:
         # Attach the interrupt overlays directly to the video container
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
         self.interrupt_fg.place_forget()  # Hide until needed
-    
+            
+        # Black overlay with 50% opacity
         self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-        self.interrupt_bg.place_forget()  # Hide until needed
+        self.interrupt_bg.configure(bg='#00000080')  # 50% opacity
+        self.interrupt_bg.place_forget()
+        
     
         # Continue/Question overlay setup
         self.cq_options_frame = tk.Frame(self.video_container, bg='white')
@@ -129,46 +132,36 @@ class InteractiveVideoApp:
     
 
     def show_cq_options_overlay(self):
-        """Display a centered overlay for Continue/Question scenes attached to the video container after the video ends."""
-        print("[DEBUG] Triggered show_cq_options_overlay()")
+        """Display the continue/question overlay after video ends."""
         self.clear_all_overlays()
     
-        # Create dimming background overlay attached to the video container
-        self.cq_bg_overlay = tk.Frame(self.video_container, bg='black')
-        self.cq_bg_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.cq_bg_overlay.lower()
-    
-        # Create overlay frame for choices attached to the video container
-        self.cq_options_frame = tk.Frame(self.video_container, bg='white')
-    
-        # Load choices from YAML config
+        # Calculate size dynamically based on choices
         options_data = self.config.get("options", {}).get(self.current_video, {})
         choices = options_data.get("choices", {})
-    
-        button_frame = tk.Frame(self.cq_options_frame, bg='white')
-        button_frame.pack(padx=20, pady=20)
-    
         num_choices = len([opt for opt in choices.items() if not opt[1].get("temporary", False)])
-        frame_width = 300 * num_choices  # Dynamically scale width based on number of buttons
-        frame_height = 200  # Taller to prevent squished appearance
     
-        # Calculate position (centered horizontally, 60% down the screen)
+        frame_width = max(300, 300 * num_choices)
+        frame_height = 200  # Increased height to prevent squishing
+    
         vc_width = self.video_container.winfo_width()
         vc_height = self.video_container.winfo_height()
         pos_x = (vc_width - frame_width) // 2
         pos_y = int(vc_height * 0.6)
     
+        # Place dynamically sized frame
         self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
     
-        # Arrange buttons side by side
+        # Populate choices
+        button_frame = tk.Frame(self.cq_options_frame, bg='white')
+        button_frame.pack(padx=10, pady=10)
+    
         for idx, (text, option) in enumerate(choices.items()):
             if not option.get("temporary", False):
-                print(f"[DEBUG] Creating button for choice: {text}")
                 button = self.create_option_button(button_frame, text, option)
                 button.grid(row=0, column=idx, padx=10, pady=10)
     
-        # Show the overlay
         self.root.after(100, self._reveal_cq_overlay)
+    
     
     
     
@@ -542,8 +535,7 @@ class InteractiveVideoApp:
     
     def show_interrupt_section(self, scene_id):
         """Display the interrupt section for a given scene attached to the video container."""
-    
-        # Ensure the interrupt overlays are initialized
+        # Initialize if necessary
         if self.interrupt_fg is None:
             self.interrupt_fg = tk.Frame(self.video_container, bg='white')
             self.interrupt_fg.place_forget()
@@ -556,22 +548,26 @@ class InteractiveVideoApp:
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
     
-        # Clear previous interrupt options safely
+        # Clear previous interrupt options
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
     
-        # Only show the interrupt section if there are temporary choices
+        # Populate choices
         if any(option.get("temporary", False) for option in choices.values()):
             for text, option in choices.items():
                 if option.get("temporary", False):
                     button = self.create_option_button(self.interrupt_fg, text, option)
                     button.pack(padx=5, pady=5)
     
-            # Attach the interrupt overlays
+            # Attach the interrupt overlay with 50% opacity
+            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
             self.interrupt_bg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+            self.interrupt_bg.attributes = {"alpha": 0.5}
+    
             self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
         else:
             self.clear_interrupt_overlays()
+    
     
     
     
