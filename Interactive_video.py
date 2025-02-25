@@ -39,13 +39,12 @@ class InteractiveVideoApp:
         self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # Attach the interrupt overlay to the right side
+        # Foreground interrupt frame to hold buttons
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-        self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
-        self.interrupt_fg.place_forget()  # Hide until needed
+        self.interrupt_fg.place_forget()  # Hide initially
         
-        # Continue/Question overlay, hidden until the video ends
-        self.cq_options_frame = tk.Frame(self.video_container, bg='white')
+        # Center overlay for Continue/Question scenes (hidden until needed)
+        self.cq_options_frame = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
         self.cq_options_frame.place_forget()
         
         
@@ -60,10 +59,10 @@ class InteractiveVideoApp:
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
         self.interrupt_fg.place_forget()  # Hide until needed
             
-        # Black overlay with 50% opacity
-        self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-        self.interrupt_bg.configure(bg='#00000080')  # 50% opacity
-        self.interrupt_bg.place_forget()
+        # Semi-transparent black overlay using Canvas
+        self.interrupt_bg = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
+        self.interrupt_bg.place_forget()  # Hide initially
+        
         
     
         # Continue/Question overlay setup
@@ -132,7 +131,7 @@ class InteractiveVideoApp:
     
 
     def show_cq_options_overlay(self):
-        """Display the continue/question overlay after video ends."""
+        """Display the continue/question overlay after the video ends."""
         self.clear_all_overlays()
     
         # Calculate size dynamically based on choices
@@ -148,12 +147,17 @@ class InteractiveVideoApp:
         pos_x = (vc_width - frame_width) // 2
         pos_y = int(vc_height * 0.6)
     
-        # Place dynamically sized frame
+        # Draw semi-transparent background for question/continue overlay
         self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
+        self.cq_options_frame.delete("all")
+        self.cq_options_frame.create_rectangle(
+            0, 0, frame_width, frame_height,
+            fill="#000000", stipple="gray50", outline=""
+        )
     
         # Populate choices
         button_frame = tk.Frame(self.cq_options_frame, bg='white')
-        button_frame.pack(padx=10, pady=10)
+        button_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
     
         for idx, (text, option) in enumerate(choices.items()):
             if not option.get("temporary", False):
@@ -161,6 +165,7 @@ class InteractiveVideoApp:
                 button.grid(row=0, column=idx, padx=10, pady=10)
     
         self.root.after(100, self._reveal_cq_overlay)
+    
     
     
     
@@ -541,7 +546,7 @@ class InteractiveVideoApp:
             self.interrupt_fg.place_forget()
     
         if self.interrupt_bg is None:
-            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+            self.interrupt_bg = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
             self.interrupt_bg.place_forget()
     
         # Load scene options from YAML
@@ -559,14 +564,24 @@ class InteractiveVideoApp:
                     button = self.create_option_button(self.interrupt_fg, text, option)
                     button.pack(padx=5, pady=5)
     
-            # Attach the interrupt overlay with 50% opacity
-            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+            # Attach the interrupt overlay with 50% opacity using Canvas
             self.interrupt_bg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
-            self.interrupt_bg.attributes = {"alpha": 0.5}
+            self.interrupt_bg.delete("all")  # Clear any existing rectangles
     
+            width = self.interrupt_bg.winfo_width()
+            height = self.interrupt_bg.winfo_height()
+    
+            # Draw semi-transparent rectangle
+            self.interrupt_bg.create_rectangle(
+                0, 0, width, height,
+                fill="#000000", stipple="gray50", outline=""
+            )
+    
+            # Attach the interrupt choices
             self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
         else:
             self.clear_interrupt_overlays()
+    
     
     
     
