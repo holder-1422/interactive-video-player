@@ -54,8 +54,10 @@ class InteractiveVideoApp:
         self.cq_options_frame.place_forget()  # Hide initially
         print("[DEBUG] Initialized cq_options_frame (Canvas)")
         
-        
-        
+        # Foreground interrupt frame to hold buttons
+        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+        self.interrupt_fg.place_forget()  # Hide initially
+        print("[DEBUG] Initialized interrupt_fg (Frame)")
         
         
         # Video frame inside the container where VLC will render the video
@@ -217,25 +219,18 @@ class InteractiveVideoApp:
                 self.clear_subframes()
                 self.show_normal_section()
     
-    def clear_all_overlays(self):
-        """Clear all overlays from the video player."""
-        print("[DEBUG] Clearing all overlays.")
-    
-        # Clear Continue/Question overlay
-        if self.cq_options_frame:
-            self.cq_options_frame.place_forget()
-            print("[DEBUG] Hiding cq_options_frame.")
-    
-        # Clear interrupt overlays
+    def clear_interrupt_overlays(self):
+        """Clear interrupt overlays attached to the video player."""
         if self.interrupt_fg:
             self.interrupt_fg.place_forget()
             self.interrupt_fg = None
-            print("[DEBUG] Hiding interrupt_fg.")
+            print("[DEBUG] Hiding and resetting interrupt_fg.")
     
         if self.interrupt_bg:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
-            print("[DEBUG] Hiding interrupt_bg.")
+            print("[DEBUG] Hiding and resetting interrupt_bg.")
+    
      
     
     
@@ -547,9 +542,16 @@ class InteractiveVideoApp:
         choices = options_data.get("choices", {})
         print(f"[DEBUG] Loaded choices for interrupt: {choices}")
     
+        # Ensure interrupt_fg is initialized
+        if self.interrupt_fg is None:
+            print("[DEBUG] Re-initializing interrupt_fg (Frame)")
+            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+            self.interrupt_fg.place_forget()
+        
         # Clear previous interrupt options
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
+        
     
         # Populate choices
         if any(option.get("temporary", False) for option in choices.values()):
