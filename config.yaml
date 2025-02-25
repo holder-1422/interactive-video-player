@@ -3,22 +3,22 @@ start: "scene1"
 
 # Video file paths for each scene
 videos:
-  scene1: "videos/Scene2-C.mp4"
-  iscene1.1: "videos/Scene1-0-A-X.mp4"
-  iscene1.2: "videos/Scene2-X.mp4"
-  scene2: "videos/Scene2-X.mp4"
-  iscene2.3: "videos/Scene3-B.mp4"
-  iscene2.4: "videos/Scene3-D.mp4"
-  scene3: "videos/Scene3-C.mp4"
-  scene4: "videos/Scene1-0-A-X.mp4"
-  scene5: "videos/Scene1-0-C.mp4"
-  scene6: "videos/Scene4.mp4"
-  scene7: "videos/Scene2.mp4"
-  s1.3: "videos/Scene2-C.mp4"
-  s1.4: "videos/Scene2-X.mp4"
-  i1.4.1: "videos/Scene2-X.mp4"
-  s1.5: "videos/Scene3-C.mp4"
-  s1.6: "videos/Scene1-0-A-X.mp4"
+  scene1: "videos/video1.mp4"
+  iscene1.1: "videos/video2.mp4"
+  iscene1.2: "videos/video3.mp4"
+  scene2: "videos/video4.mp4"
+  iscene2.3: "videos/video5.mp4"
+  iscene2.4: "videos/video6.mp4"
+  scene3: "videos/video7.mp4"
+  scene4: "videos/video8.mp4"
+  scene5: "videos/video9.mp4"
+  scene6: "videos/video10.mp4"
+  scene7: "videos/video1.mp4"
+  s1.3: "videos/video2.mp4"
+  s1.4: "videos/video3.mp4"
+  i1.4.1: "videos/video4.mp4"
+  s1.5: "videos/video5.mp4"
+  s1.6: "videos/video6.mp4"
 
 # Options for each scene
 options:
@@ -29,17 +29,17 @@ options:
     choices:
       "scene 1 option 1":
         next: s1.3
-        image: "images/2.jpg"
+        image: "images/q1.jpg"
       "scene 2 option 2":
         next: scene3
-        image: "images/1-0-A-1.jpg"
+        image: "images/q1.jpg"
       "interrupt option":
         next: iscene1.1
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
         temporary: true
       "interrupt option 2":
         next: iscene1.2
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
         temporary: true
   
   s1.3:
@@ -48,16 +48,16 @@ options:
     choices:
       "Option 1":
         next: s1.3
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
       "option 2":
         next: s1.4
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
       "option 3":
         next: s1.5
-        image: "images/2-1-100-133.jpg"
+        image: "images/m3.jpg"
       "option 4":
         next: s1.6
-        image: "images/2-1-100-133.jpg"
+        image: "images/m4.jpg"
         
   s1.4:
     scene_type: Main
@@ -65,19 +65,19 @@ options:
     choices:
       "Option 1":
         next: s1.3
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
       "option 2":
         next: s1.4
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
       "option 3":
         next: s1.5
-        image: "images/2-1-100-133.jpg"
+        image: "images/m3.jpg"
       "option 4":
         next: s1.6
-        image: "images/2-1-100-133.jpg"
+        image: "images/m4.jpg"
       "temporary interrupt option":
         next: i1.4.1 
-        image: "images/2-3-b-100-133.jpg"  
+        image: "images/m1.jpg"  
         temporary: true
         
   s1.5:
@@ -86,16 +86,16 @@ options:
     choices:
       "Option 1":
         next: s1.3
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
       "option 2":
         next: s1.4
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
       "option 3":
         next: s1.5
-        image: "images/2-1-100-133.jpg"
+        image: "images/m3.jpg"
       "option 4":
         next: s1.6
-        image: "images/2-1-100-133.jpg"
+        image: "images/m4.jpg"
     
   s1.6:
     scene_type: Main
@@ -103,16 +103,16 @@ options:
     choices:
       "Option 1":
         next: s1.3
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
       "option 2":
         next: s1.4
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
       "option 3":
         next: s1.5
-        image: "images/2-1-100-133.jpg"
+        image: "images/m3.jpg"
       "option 4":
         next: s1.6
-        image: "images/2-1-100-133.jpg"
+        image: "images/m4.jpg"
 
   # Scene with temporary interrupt choices
   scene2:
@@ -121,17 +121,17 @@ options:
     choices:
       "scene 2 option 1":
         next: scene4
-        image: "images/2.jpg"
+        image: "images/11.jpg"
       "scene 2 option 2":
         next: scene5
-        image: "images/forest_shortcut.jpg"
+        image: "images/q2.jpg"
       "scene 2 interrupt 1":
         next: iscene2.3
-        image: "images/2-1-100-133.jpg"
+        image: "images/m1.jpg"
         temporary: true
       "scene 2 interrup 2":
         next: iscene2.4
-        image: "images/2-1-100-133.jpg"
+        image: "images/m2.jpg"
         temporary: true
 
   # Another main scene for free exploration
@@ -141,10 +141,10 @@ options:
     choices:
       "Head to the Mountain":
         next: scene4
-        image: "images/2.jpg"
+        image: "images/q2.jpg"
       "go to scene5":
         next: scene5    
-        image: "images/2.jpg"
+        image: "images/q1.jpg"
 
   # Mountain Path - Continue Scene
   scene4:
@@ -153,7 +153,7 @@ options:
     choices:
       "Reach the Summit":
         next: scene7
-        image: "images/2.jpg"
+        image: "images/q3.jpg"
 
   # Forest Path - Question Scene
   scene5:
@@ -162,10 +162,10 @@ options:
     choices:
       "Run Away":
         next: scene7
-        image: "images/2.jpg"
+        image: "images/q2.jpg"
       "Try to Calm It":
         next: scene7
-        image: "images/2.jpg"
+        image: "images/q4.jpg"
 
   # Bonus Scene
   scene6:
@@ -174,7 +174,7 @@ options:
     choices:
       "Back to Main Menu":
         next: scene1
-        image: "images/2.jpg"
+        image: "images/q4.jpg"
 
   # Outro Scene
   scene7:
@@ -183,4 +183,4 @@ options:
     choices:
       "Restart":
         next: scene1
-        image: "images/2.jpg"
+        image: "images/q1.jpg"

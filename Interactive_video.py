@@ -128,6 +128,47 @@ class InteractiveVideoApp:
         self.play_video()
         # Periodically update overlay positions.
         self.periodic_update_overlay()
+        
+        #v.2.9.7 changes below
+        
+        # Ensure the video container has updated dimensions
+        self.video_container.update_idletasks()
+        
+        # Get video container dimensions
+        vc_width = self.video_container.winfo_width()
+        vc_height = self.video_container.winfo_height()
+        
+        # Create dimming background overlay attached to the video container
+        self.cq_bg_overlay = tk.Frame(self.video_container, bg='black')
+        self.cq_bg_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.cq_bg_overlay.lower()  # Keep the overlay hidden for now
+        
+        # Create overlay frame for choices attached to the video container
+        self.cq_options_frame = tk.Frame(self.video_container, bg='white')
+        
+        # Calculate position (centered, 60% down the screen)
+        frame_width = 300
+        frame_height = 100
+        pos_x = (vc_width - frame_width) // 2
+        pos_y = int(vc_height * 0.6)
+        
+        self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
+        self.cq_options_frame.lower()  # Keep the overlay hidden for now
+        
+        # Populate choices from YAML config
+        options_data = self.config.get("options", {}).get(self.current_video, {})
+        choices = options_data.get("choices", {})
+        
+        button_frame = tk.Frame(self.cq_options_frame, bg='white')
+        button_frame.pack(padx=10, pady=10)
+        
+        for text, option in choices.items():
+            if not option.get("temporary", False):  # Only show non-temporary choices
+                self.create_option_button(button_frame, text, option)
+        
+        # Show the overlays when the video ends
+        self.root.after(100, lambda: self._reveal_cq_overlay())
+
     
     def clear_interrupt_overlays(self):
         """Withdraw both interruption overlay windows."""
