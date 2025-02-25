@@ -38,14 +38,6 @@ class InteractiveVideoApp:
         self.instance = vlc.Instance("--no-xlib", "--file-caching=2000", "--network-caching=2000",
                                      "--vout=direct3d9", "--avcodec-hw=none")
         self.player = self.instance.media_player_new()
-
-        # Attach the interrupt overlays directly to the video container
-        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-        self.interrupt_fg.place_forget()
-        
-        self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-        self.interrupt_bg.place_forget()
-        
         
         
         # Attach VLC end-of-video event after initializing the media player
@@ -69,6 +61,13 @@ class InteractiveVideoApp:
         # Video container frame on the right.
         self.video_container = tk.Frame(self.main_frame, bg="black")
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        # Attach the interrupt overlays directly to the video container
+        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+        self.interrupt_fg.place_forget()
+        
+        self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+        self.interrupt_bg.place_forget()
+        
         
         # Video frame inside the container (for video output)
         self.video_frame = tk.Frame(self.video_container, bg="black")
