@@ -226,6 +226,7 @@ class InteractiveVideoApp:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
     
+    
 
     
     
@@ -503,11 +504,21 @@ class InteractiveVideoApp:
     
     def show_interrupt_section(self, scene_id):
         """Display the interrupt section for a given scene attached to the video container."""
+    
+        # Ensure the interrupt overlays are initialized
+        if self.interrupt_fg is None:
+            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+            self.interrupt_fg.place_forget()
+    
+        if self.interrupt_bg is None:
+            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+            self.interrupt_bg.place_forget()
+    
         # Load scene options from YAML
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
     
-        # Clear previous interrupt options
+        # Clear previous interrupt options safely
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
     
