@@ -38,6 +38,11 @@ class InteractiveVideoApp:
         # Video container where the video will be rendered
         self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        
+        # Video frame inside the container where VLC will render the video
+        self.video_frame = tk.Frame(self.video_container, bg='black')
+        self.video_frame.pack(fill=tk.BOTH, expand=True)
+        
 
         # Semi-transparent black overlay using Canvas for interrupts
         self.interrupt_bg = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
@@ -233,6 +238,10 @@ class InteractiveVideoApp:
         if self.interrupt_bg:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
+        # Clear video frame
+        if self.video_frame:
+            self.video_frame.pack_forget()
+        
     
     
     
