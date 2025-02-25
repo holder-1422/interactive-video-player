@@ -66,7 +66,11 @@ class InteractiveVideoApp:
         self.interrupt_fg.place_forget()
         
         self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-        self.interrupt_bg.place_forget()
+        self.interrupt_bg.place_forget()  # Hide it by default
+        
+        # Initialize cq_options_frame
+        self.cq_options_frame = tk.Frame(self.video_container, bg='white')
+        self.cq_options_frame.place_forget()
         
         
         # Video frame inside the container (for video output)
@@ -74,14 +78,14 @@ class InteractiveVideoApp:
         self.video_frame.pack(fill=tk.BOTH, expand=True)
         
         # Create a Toplevel for the semi-transparent background overlay.
-        self.interrupt_bg = tk.Toplevel(self.root)
+        self.interrupt_bg = tk.Frame(self.video_container, bg='white')
         self.interrupt_bg.overrideredirect(True)
         self.interrupt_bg.attributes("-alpha", 0.7)  # 70% opaque background
         self.interrupt_bg.attributes("-topmost", True)
         self.interrupt_bg.configure(bg='gray')
         
         # Create a Toplevel for the fully opaque interruption choices.
-        self.interrupt_fg = tk.Toplevel(self.root)
+        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
         self.interrupt_fg.overrideredirect(True)
         self.interrupt_fg.attributes("-topmost", True)
         self.interrupt_fg.configure(bg='white')
@@ -295,12 +299,14 @@ class InteractiveVideoApp:
             pos_x = (vc_width - frame_width) // 2
             pos_y = int(vc_height * 0.6)
     
-            self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
+            if self.cq_options_frame:
+                self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
     
             # Continue updating periodically
             self.root.after(1000, self.periodic_update_overlay)
         except Exception as e:
             print(f"Error updating overlay geometry: {e}")
+    
     
     
     
@@ -552,15 +558,6 @@ class InteractiveVideoApp:
     
     def show_interrupt_section(self, scene_id):
         """Display the interrupt section for a given scene attached to the video container."""
-        # Initialize interrupt overlays directly in the video container
-        if self.interrupt_fg is None:
-            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-            self.interrupt_fg.place_forget()
-    
-        if self.interrupt_bg is None:
-            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-            self.interrupt_bg.place_forget()
-    
         # Load scene options from YAML
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
@@ -569,15 +566,19 @@ class InteractiveVideoApp:
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
     
-        # Create new interrupt buttons
-        for text, option in choices.items():
-            if option.get("temporary", False):
-                button = self.create_option_button(self.interrupt_fg, text, option)
-                button.pack(padx=5, pady=5)
+        # Only show the interrupt section if there are temporary choices
+        if any(option.get("temporary", False) for option in choices.values()):
+            for text, option in choices.items():
+                if option.get("temporary", False):
+                    button = self.create_option_button(self.interrupt_fg, text, option)
+                    button.pack(padx=5, pady=5)
     
-        # Attach the interrupt overlay to the right side
-        self.interrupt_bg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
-        self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+            # Show the overlays
+            self.interrupt_bg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+            self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+        else:
+            self.clear_interrupt_overlays()
+    
     
     
     
