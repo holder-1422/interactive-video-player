@@ -1,6 +1,6 @@
 ########################################################################
 # Interactive Video player
-# Version v2.9.8 (YAML version) –
+# Version v2.9.9 (YAML version) –
 # Date 02/24/2025
 # Created By Jeremy Holder (Modified by ChatGPT)
 ########################################################################
@@ -38,6 +38,10 @@ class InteractiveVideoApp:
         self.instance = vlc.Instance("--no-xlib", "--file-caching=2000", "--network-caching=2000",
                                      "--vout=direct3d9", "--avcodec-hw=none")
         self.player = self.instance.media_player_new()
+        # Initialize interrupt overlays to prevent NoneType errors
+        self.interrupt_fg = None
+        self.interrupt_bg = None
+        
         
         # Attach VLC end-of-video event after initializing the media player
         self.event_manager = self.player.event_manager()
@@ -260,25 +264,36 @@ class InteractiveVideoApp:
     
     
     def clear_interrupt_overlays(self):
-        """Safely clear temporary interrupt overlays."""
-        if self.interrupt_fg:
-            self.interrupt_fg.place_forget()
-            self.interrupt_fg = None
+        """Clear interrupt overlays."""
+        if self.interrupt_fg is not None:
+            self.interrupt_fg.withdraw()
+        if self.interrupt_bg is not None:
+            self.interrupt_bg.withdraw()
     
-        if self.interrupt_bg:
-            self.interrupt_bg.place_forget()
-            self.interrupt_bg = None
     
         
     
     
     def periodic_update_overlay(self):
-        """Safely update interrupt overlay position if they exist."""
-        if self.interrupt_fg and self.interrupt_bg:
-            self.interrupt_bg.deiconify()
-            self.interrupt_fg.deiconify()
-            self.update_interrupt_geometry()
-        self.root.after(1000, self.periodic_update_overlay)
+        """Periodically update the overlay position based on video container size."""
+        try:
+            self.video_container.update_idletasks()
+            vc_width = self.video_container.winfo_width()
+            vc_height = self.video_container.winfo_height()
+    
+            # Calculate position (centered, 60% down the screen)
+            frame_width = 300
+            frame_height = 100
+            pos_x = (vc_width - frame_width) // 2
+            pos_y = int(vc_height * 0.6)
+    
+            self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
+    
+            # Continue updating periodically
+            self.root.after(1000, self.periodic_update_overlay)
+        except Exception as e:
+            print(f"Error updating overlay geometry: {e}")
+    
     
     
     def update_interrupt_geometry(self):
@@ -429,27 +444,15 @@ class InteractiveVideoApp:
         self.image_refs = []
     
     def clear_subframes(self):
-        """Clear any subframes including interrupt overlays."""
-        if self.interrupt_fg:
-            try:
-                for widget in list(self.interrupt_fg.winfo_children()):
-                    widget.destroy()
-            except Exception as e:
-                print(f"[DEBUG] Error clearing interrupt_fg widgets: {e}")
+        """Clear all subframes and overlays."""
+        if self.interrupt_fg is not None:
+            for widget in list(self.interrupt_fg.winfo_children()):
+                widget.destroy()
+            self.interrupt_fg.withdraw()
     
-        if self.interrupt_bg:
-            try:
-                self.interrupt_fg.withdraw()
-                self.interrupt_bg.withdraw()
-            except Exception as e:
-                print(f"[DEBUG] Error withdrawing interrupt overlays: {e}")
+        if self.interrupt_bg is not None:
+            self.interrupt_bg.withdraw()
     
-        # Clear any other subframes if necessary
-        if hasattr(self, 'cq_options_frame'):
-            try:
-                self.cq_options_frame.destroy()
-            except Exception as e:
-                print(f"[DEBUG] Error clearing cq_options_frame: {e}")
 
     
     def update_seek_bar(self):
@@ -539,33 +542,43 @@ class InteractiveVideoApp:
                 print(f"Image not found: {full_image_path}")
         self.create_option_button(frame, text, option)
     
-    def show_interrupt_section(self, scene_id=None):
-        """Display interrupt options as an overlay."""
-        if not self.interrupt_fg or not self.interrupt_bg:
-            # Re-initialize if not already set
-            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-            self.interrupt_fg.place_forget()
+    def show_interrupt_section(self, scene_id):
+        """Display the interrupt section for a given scene."""
+        # Initialize interrupt overlays if they are None
+        if self.interrupt_fg is None:
+            self.interrupt_fg = tk.Toplevel(self.root)
+            self.interrupt_fg.withdraw()
+            self.interrupt_fg.overrideredirect(True)
+            self.interrupt_fg.attributes('-topmost', True)
     
-            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
-            self.interrupt_bg.place_forget()
+        if self.interrupt_bg is None:
+            self.interrupt_bg = tk.Toplevel(self.root)
+            self.interrupt_bg.withdraw()
+            self.interrupt_bg.overrideredirect(True)
+            self.interrupt_bg.attributes('-topmost', True)
     
-        if scene_id is None:
-            scene_id = self.current_video
-    
+        # Load scene options
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
     
+        # Clear previous interrupt options
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
     
+        # Create new interrupt options
         for text, option in choices.items():
             if option.get("temporary", False):
                 button = self.create_option_button(self.interrupt_fg, text, option)
                 button.pack(padx=5, pady=5)
     
         # Display the interrupt overlay
-        self.interrupt_bg.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.interrupt_fg.place(relx=0.75, rely=0.1, width=200, height=300)  # Position it on the right
+        self.interrupt_bg.deiconify()
+        self.interrupt_fg.deiconify()
+    
+        # Position the overlay
+        self.interrupt_bg.geometry("300x400+100+100")
+        self.interrupt_fg.geometry("300x400+100+100")
+    
     
     
     def show_normal_section(self):
