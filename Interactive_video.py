@@ -1,6 +1,6 @@
 ########################################################################
 # Interactive Video player
-# Version v2.9.11 (YAML version) –
+# Version v2.9.12 (YAML version) –
 # Date 02/24/2025
 # Created By Jeremy Holder (Modified by ChatGPT)
 ########################################################################
