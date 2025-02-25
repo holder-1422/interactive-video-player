@@ -1,6 +1,6 @@
 ########################################################################
 # Interactive Video player
-# Version v2.9.9 (YAML version) –
+# Version v2.9.10 (YAML version) –
 # Date 02/24/2025
 # Created By Jeremy Holder (Modified by ChatGPT)
 ########################################################################
@@ -38,9 +38,14 @@ class InteractiveVideoApp:
         self.instance = vlc.Instance("--no-xlib", "--file-caching=2000", "--network-caching=2000",
                                      "--vout=direct3d9", "--avcodec-hw=none")
         self.player = self.instance.media_player_new()
-        # Initialize interrupt overlays to prevent NoneType errors
-        self.interrupt_fg = None
-        self.interrupt_bg = None
+
+        # Attach the interrupt overlays directly to the video container
+        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+        self.interrupt_fg.place_forget()
+        
+        self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+        self.interrupt_bg.place_forget()
+        
         
         
         # Attach VLC end-of-video event after initializing the media player
@@ -264,11 +269,15 @@ class InteractiveVideoApp:
     
     
     def clear_interrupt_overlays(self):
-        """Clear interrupt overlays."""
-        if self.interrupt_fg is not None:
-            self.interrupt_fg.withdraw()
-        if self.interrupt_bg is not None:
-            self.interrupt_bg.withdraw()
+        """Clear interrupt overlays attached to the video player."""
+        if self.interrupt_fg:
+            self.interrupt_fg.place_forget()
+            self.interrupt_fg = None
+    
+        if self.interrupt_bg:
+            self.interrupt_bg.place_forget()
+            self.interrupt_bg = None
+    
     
     
         
@@ -543,21 +552,17 @@ class InteractiveVideoApp:
         self.create_option_button(frame, text, option)
     
     def show_interrupt_section(self, scene_id):
-        """Display the interrupt section for a given scene."""
-        # Initialize interrupt overlays if they are None
+        """Display the interrupt section for a given scene attached to the video container."""
+        # Initialize interrupt overlays directly in the video container
         if self.interrupt_fg is None:
-            self.interrupt_fg = tk.Toplevel(self.root)
-            self.interrupt_fg.withdraw()
-            self.interrupt_fg.overrideredirect(True)
-            self.interrupt_fg.attributes('-topmost', True)
+            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+            self.interrupt_fg.place_forget()
     
         if self.interrupt_bg is None:
-            self.interrupt_bg = tk.Toplevel(self.root)
-            self.interrupt_bg.withdraw()
-            self.interrupt_bg.overrideredirect(True)
-            self.interrupt_bg.attributes('-topmost', True)
+            self.interrupt_bg = tk.Frame(self.video_container, bg='black')
+            self.interrupt_bg.place_forget()
     
-        # Load scene options
+        # Load scene options from YAML
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
     
@@ -565,19 +570,16 @@ class InteractiveVideoApp:
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
     
-        # Create new interrupt options
+        # Create new interrupt buttons
         for text, option in choices.items():
             if option.get("temporary", False):
                 button = self.create_option_button(self.interrupt_fg, text, option)
                 button.pack(padx=5, pady=5)
     
-        # Display the interrupt overlay
-        self.interrupt_bg.deiconify()
-        self.interrupt_fg.deiconify()
+        # Attach the interrupt overlay to the right side
+        self.interrupt_bg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+        self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
     
-        # Position the overlay
-        self.interrupt_bg.geometry("300x400+100+100")
-        self.interrupt_fg.geometry("300x400+100+100")
     
     
     
