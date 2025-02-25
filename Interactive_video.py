@@ -230,11 +230,6 @@ class InteractiveVideoApp:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
             print("[DEBUG] Hiding and resetting interrupt_bg.")
-    
-     
-    
-    
-    
 
     def on_video_end(self, event):
         """Callback triggered when VLC reports the video has ended."""
@@ -537,21 +532,26 @@ class InteractiveVideoApp:
         """Display the interrupt section for a given scene attached to the video container."""
         print("[DEBUG] Triggered show_interrupt_section()")
     
+        # Ensure interrupt_bg is initialized
+        if self.interrupt_bg is None or not isinstance(self.interrupt_bg, tk.Canvas):
+            print("[DEBUG] Re-initializing interrupt_bg (Canvas)")
+            self.interrupt_bg = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
+            self.interrupt_bg.place_forget()
+    
+        # Ensure interrupt_fg is initialized
+        if self.interrupt_fg is None or not isinstance(self.interrupt_fg, tk.Frame):
+            print("[DEBUG] Re-initializing interrupt_fg (Frame)")
+            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+            self.interrupt_fg.place_forget()
+    
         # Load scene options from YAML
         options_data = self.config.get("options", {}).get(scene_id, {})
         choices = options_data.get("choices", {})
         print(f"[DEBUG] Loaded choices for interrupt: {choices}")
     
-        # Ensure interrupt_fg is initialized
-        if self.interrupt_fg is None:
-            print("[DEBUG] Re-initializing interrupt_fg (Frame)")
-            self.interrupt_fg = tk.Frame(self.video_container, bg='white')
-            self.interrupt_fg.place_forget()
-        
         # Clear previous interrupt options
         for widget in list(self.interrupt_fg.winfo_children()):
             widget.destroy()
-        
     
         # Populate choices
         if any(option.get("temporary", False) for option in choices.values()):
@@ -576,8 +576,7 @@ class InteractiveVideoApp:
         else:
             print("[DEBUG] No temporary choices found, clearing overlays.")
             self.clear_interrupt_overlays()
-    
-    
+     
     
     
     def show_normal_section(self):
