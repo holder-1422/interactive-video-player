@@ -38,6 +38,16 @@ class InteractiveVideoApp:
         # Video container where the video will be rendered
         self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        # Attach the interrupt overlay to the right side
+        self.interrupt_fg = tk.Frame(self.video_container, bg='white')
+        self.interrupt_fg.place(relx=0.75, rely=0.1, relwidth=0.2, relheight=0.8)
+        self.interrupt_fg.place_forget()  # Hide until needed
+        
+        # Continue/Question overlay, hidden until the video ends
+        self.cq_options_frame = tk.Frame(self.video_container, bg='white')
+        self.cq_options_frame.place_forget()
+        
         
         # Video frame inside the container where VLC will render the video
         self.video_frame = tk.Frame(self.video_container, bg='black')
@@ -74,6 +84,34 @@ class InteractiveVideoApp:
     
         # Start periodic overlay updates
         self.periodic_update_overlay()
+        # Initialize normal_section for main scenes
+        self.normal_section = None
+
+
+        # VLC Control Bar
+        self.control_frame = tk.Frame(self.root, bg='gray')
+        self.control_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Play/Pause button
+        self.is_playing = True
+        self.play_pause_btn = tk.Button(self.control_frame, text="Pause", command=self.toggle_play_pause)
+        self.play_pause_btn.pack(side=tk.LEFT)
+        
+        # Mute button
+        self.is_muted = False
+        self.mute_btn = tk.Button(self.control_frame, text="Mute", command=self.toggle_mute)
+        self.mute_btn.pack(side=tk.LEFT)
+        
+        # Volume slider
+        self.volume_var = tk.IntVar(value=100)
+        self.volume_slider = tk.Scale(self.control_frame, from_=0, to=100, orient=tk.HORIZONTAL, variable=self.volume_var, command=self.set_volume)
+        self.volume_slider.pack(side=tk.LEFT)
+        
+        # Seek bar
+        self.seek_var = tk.DoubleVar()
+        self.seek_bar = tk.Scale(self.control_frame, from_=0, to=100, orient=tk.HORIZONTAL, variable=self.seek_var, command=self.seek_video)
+        self.seek_bar.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
     
         
     def load_config(self):
@@ -564,6 +602,20 @@ class InteractiveVideoApp:
         self.clear_options()
         if self.temporary_choices_exist():
             self.show_interrupt_section()
+    def show_main_options_overlay(self):
+        """Display the main scene options."""
+        print("[DEBUG] Showing main scene options")
+        self.clear_all_overlays()
+    
+        if self.normal_section is None:
+            self.normal_section = tk.Frame(self.video_container, bg='white')
+        
+        self.normal_section.place(relx=0.1, rely=0.7, relwidth=0.3, relheight=0.2)
+    
+        # Example button for main options
+        button = tk.Button(self.normal_section, text="Go Back", command=lambda: self.handle_option({'next': 'previous_scene'}))
+        button.pack(padx=5, pady=5)
+    
     
     def handle_option(self, option):
         """Handle user choice and transition to the next scene."""
@@ -585,6 +637,43 @@ class InteractiveVideoApp:
             self.play_video()
         else:
             print("[DEBUG] No next scene defined in option.")
+            
+    def toggle_play_pause(self):
+        """Toggle play and pause for the VLC player."""
+        if self.is_playing:
+            self.player.pause()
+            self.play_pause_btn.config(text="Play")
+        else:
+            self.player.play()
+            self.play_pause_btn.config(text="Pause")
+        self.is_playing = not self.is_playing
+    
+    def toggle_mute(self):
+        """Toggle mute/unmute."""
+        self.is_muted = not self.is_muted
+        self.player.audio_toggle_mute()
+        self.mute_btn.config(text="Unmute" if self.is_muted else "Mute")
+    
+    def set_volume(self, value):
+        """Adjust the VLC player volume."""
+        volume = int(value)
+        self.player.audio_set_volume(volume)
+    
+    def seek_video(self, value):
+        """Seek video position."""
+        if self.player.is_playing():
+            new_position = float(value) / 100
+            self.player.set_position(new_position)
+    
+    def update_seek_bar(self):
+        """Update the seek bar as the video plays."""
+        if self.player.is_playing():
+            current_time = self.player.get_time()
+            duration = self.player.get_length()
+            if duration > 0:
+                self.seek_var.set((current_time / duration) * 100)
+        self.root.after(1000, self.update_seek_bar)
+    
     
     
     
