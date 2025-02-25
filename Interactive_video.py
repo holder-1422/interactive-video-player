@@ -38,6 +38,11 @@ class InteractiveVideoApp:
         # Video container where the video will be rendered
         self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        
+        # Video frame inside the container where VLC will render the video
+        self.video_frame = tk.Frame(self.video_container, bg='black')
+        self.video_frame.pack(fill=tk.BOTH, expand=True)
+        
     
         # Attach the interrupt overlays directly to the video container
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
