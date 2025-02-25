@@ -39,18 +39,18 @@ class InteractiveVideoApp:
         self.video_container = tk.Frame(self.main_frame, bg='black')
         self.video_container.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        # Semi-transparent black overlay using Canvas for interrupts
+        self.interrupt_bg = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
+        self.interrupt_bg.place_forget()  # Hide initially
+        
         # Foreground interrupt frame to hold buttons
         self.interrupt_fg = tk.Frame(self.video_container, bg='white')
         self.interrupt_fg.place_forget()  # Hide initially
         
         # Center overlay for Continue/Question scenes (hidden until needed)
         self.cq_options_frame = tk.Canvas(self.video_container, bg='black', highlightthickness=0)
-        self.cq_options_frame.place_forget()
-        
-        
-        # Video frame inside the container where VLC will render the video
-        self.video_frame = tk.Frame(self.video_container, bg='black')
-        self.video_frame.pack(fill=tk.BOTH, expand=True)
+        self.cq_options_frame.place_forget()  # Hide until needed
+
         
         # Initialize volume control
         self.volume_var = tk.IntVar(value=100)  # Set default volume to 100%
@@ -131,7 +131,7 @@ class InteractiveVideoApp:
     
 
     def show_cq_options_overlay(self):
-        """Display the continue/question overlay after the video ends."""
+        """Display the continue/question overlay after video ends."""
         self.clear_all_overlays()
     
         # Calculate size dynamically based on choices
@@ -165,6 +165,7 @@ class InteractiveVideoApp:
                 button.grid(row=0, column=idx, padx=10, pady=10)
     
         self.root.after(100, self._reveal_cq_overlay)
+
     
     
     
@@ -221,22 +222,18 @@ class InteractiveVideoApp:
         print("[DEBUG] Clearing all overlays.")
     
         # Clear Continue/Question overlay if it exists
-        if hasattr(self, 'cq_bg_overlay'):
-            self.cq_bg_overlay.destroy()
-            del self.cq_bg_overlay
-    
-        if hasattr(self, 'cq_options_frame'):
-            self.cq_options_frame.destroy()
-            del self.cq_options_frame
+        if self.cq_options_frame:
+            self.cq_options_frame.place_forget()
     
         # Clear interrupt overlays if they exist
         if self.interrupt_fg:
-            self.interrupt_fg.destroy()
+            self.interrupt_fg.place_forget()
             self.interrupt_fg = None
     
         if self.interrupt_bg:
-            self.interrupt_bg.destroy()
+            self.interrupt_bg.place_forget()
             self.interrupt_bg = None
+    
     
     
     
