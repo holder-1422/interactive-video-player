@@ -1,0 +1,186 @@
+# Starting scene ID
+start: "scene1"
+
+# Video file paths for each scene
+videos:
+  scene1: "videos/Scene2-C.mp4"
+  iscene1.1: "videos/Scene1-0-A-X.mp4"
+  iscene1.2: "videos/Scene2-X.mp4"
+  scene2: "videos/Scene2-X.mp4"
+  iscene2.3: "videos/Scene3-B.mp4"
+  iscene2.4: "videos/Scene3-D.mp4"
+  scene3: "videos/Scene3-C.mp4"
+  scene4: "videos/Scene1-0-A-X.mp4"
+  scene5: "videos/Scene1-0-C.mp4"
+  scene6: "videos/Scene4.mp4"
+  scene7: "videos/Scene2.mp4"
+  s1.3: "videos/Scene2-C.mp4"
+  s1.4: "videos/Scene2-X.mp4"
+  i1.4.1: "videos/Scene2-X.mp4"
+  s1.5: "videos/Scene3-C.mp4"
+  s1.6: "videos/Scene1-0-A-X.mp4"
+
+# Options for each scene
+options:
+  # Question scene
+  scene1:
+    scene_type: Question
+    question_heading: "Choose your adventure:"   
+    choices:
+      "scene 1 option 1":
+        next: s1.3
+        image: "images/2.jpg"
+      "scene 2 option 2":
+        next: scene3
+        image: "images/1-0-A-1.jpg"
+      "interrupt option":
+        next: iscene1.1
+        image: "images/2-1-100-133.jpg"
+        temporary: true
+      "interrupt option 2":
+        next: iscene1.2
+        image: "images/2-1-100-133.jpg"
+        temporary: true
+  
+  s1.3:
+    scene_type: Main
+    main_heading: "This is the main part of the script"
+    choices:
+      "Option 1":
+        next: s1.3
+        image: "images/2-1-100-133.jpg"
+      "option 2":
+        next: s1.4
+        image: "images/2-1-100-133.jpg"
+      "option 3":
+        next: s1.5
+        image: "images/2-1-100-133.jpg"
+      "option 4":
+        next: s1.6
+        image: "images/2-1-100-133.jpg"
+        
+  s1.4:
+    scene_type: Main
+    main_heading: "This is the main part of the script"
+    choices:
+      "Option 1":
+        next: s1.3
+        image: "images/2-1-100-133.jpg"
+      "option 2":
+        next: s1.4
+        image: "images/2-1-100-133.jpg"
+      "option 3":
+        next: s1.5
+        image: "images/2-1-100-133.jpg"
+      "option 4":
+        next: s1.6
+        image: "images/2-1-100-133.jpg"
+      "temporary interrupt option":
+        next: i1.4.1 
+        image: "images/2-3-b-100-133.jpg"  
+        temporary: true
+        
+  s1.5:
+    scene_type: Main
+    main_heading: "This is the main part of the script"
+    choices:
+      "Option 1":
+        next: s1.3
+        image: "images/2-1-100-133.jpg"
+      "option 2":
+        next: s1.4
+        image: "images/2-1-100-133.jpg"
+      "option 3":
+        next: s1.5
+        image: "images/2-1-100-133.jpg"
+      "option 4":
+        next: s1.6
+        image: "images/2-1-100-133.jpg"
+    
+  s1.6:
+    scene_type: Main
+    main_heading: "This is the main part of the script"
+    choices:
+      "Option 1":
+        next: s1.3
+        image: "images/2-1-100-133.jpg"
+      "option 2":
+        next: s1.4
+        image: "images/2-1-100-133.jpg"
+      "option 3":
+        next: s1.5
+        image: "images/2-1-100-133.jpg"
+      "option 4":
+        next: s1.6
+        image: "images/2-1-100-133.jpg"
+
+  # Scene with temporary interrupt choices
+  scene2:
+    scene_type: Continue
+    continue_heading: "You took the left path. Watch out for surprises!"
+    choices:
+      "scene 2 option 1":
+        next: scene4
+        image: "images/2.jpg"
+      "scene 2 option 2":
+        next: scene5
+        image: "images/forest_shortcut.jpg"
+      "scene 2 interrupt 1":
+        next: iscene2.3
+        image: "images/2-1-100-133.jpg"
+        temporary: true
+      "scene 2 interrup 2":
+        next: iscene2.4
+        image: "images/2-1-100-133.jpg"
+        temporary: true
+
+  # Another main scene for free exploration
+  scene3:
+    scene_type: Question
+    main_heading: "You're on the right path, where to next?"
+    choices:
+      "Head to the Mountain":
+        next: scene4
+        image: "images/2.jpg"
+      "go to scene5":
+        next: scene5    
+        image: "images/2.jpg"
+
+  # Mountain Path - Continue Scene
+  scene4:
+    scene_type: Continue
+    continue_heading: "You are now climbing the mountain!"
+    choices:
+      "Reach the Summit":
+        next: scene7
+        image: "images/2.jpg"
+
+  # Forest Path - Question Scene
+  scene5:
+    scene_type: Question
+    question_heading: "You encountered a wild animal. What will you do?"
+    choices:
+      "Run Away":
+        next: scene7
+        image: "images/2.jpg"
+      "Try to Calm It":
+        next: scene7
+        image: "images/2.jpg"
+
+  # Bonus Scene
+  scene6:
+    scene_type: Continue
+    continue_heading: "Enjoy this bonus content!"
+    choices:
+      "Back to Main Menu":
+        next: scene1
+        image: "images/2.jpg"
+
+  # Outro Scene
+  scene7:
+    scene_type: Continue
+    continue_heading: "Thank you for playing!"
+    choices:
+      "Restart":
+        next: scene1
+        image: "images/2.jpg"
