@@ -63,6 +63,9 @@ class InteractiveVideoApp:
         # Video frame inside the container where VLC will render the video
         self.video_frame = tk.Frame(self.video_container, bg='black')
         self.video_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Initialize skip_button attribute
+        self.skip_button = None  
 
         
         # Initialize volume control
@@ -376,8 +379,8 @@ class InteractiveVideoApp:
         self.player.audio_set_mute(self.is_muted)
         self.mute_button.config(text="Unmute" if self.is_muted else "Mute")
     
-    def play_video(self, resume_time=None):
-        """Play the video and set up VLC event detection."""
+    def play_video(self):
+        """Play the video and handle skip button visibility correctly."""
         self.clear_interrupt_overlays()
         self.clear_subframes()
     
@@ -388,36 +391,28 @@ class InteractiveVideoApp:
             self.player.set_hwnd(self.video_frame.winfo_id())
             self.player.set_media(media)
     
-            # Attach the end-of-video event after initializing the media player
             self.event_manager = self.player.event_manager()
             self.event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self.on_video_end)
     
             self.player.play()
             self.set_volume(self.volume_var.get())
             self.root.after(500, self.adjust_window_size)
-            # Ensure skip button is available if we're resuming an interruption
+    
+            # Ensure the skip button is initialized before hiding it
+            if hasattr(self, 'skip_button') and self.skip_button:
+                self.hide_skip_button()
+            
+            # Ensure skip button is available if resuming an interruption
             if self.resume_video:
                 print("[DEBUG] Resuming from interruption, showing skip button.")
                 self.ensure_skip_button()
             else:
                 print("[DEBUG] No interruption, hiding skip button.")
                 self.hide_skip_button()
-            
-            
     
-            # Resume video from the correct timestamp if applicable
-            if resume_time is not None:
-                self.player.pause()
-                self.root.after(50, lambda: self.player.set_time(resume_time))
-                self.root.after(100, lambda: self.player.play())
-    
-            # Ensure skip button is available if we're resuming an interruption
-            if self.resume_video:
-                self.ensure_skip_button()
-            else:
-                self.hide_skip_button()
         else:
             messagebox.showerror("Error", f"Video file not found: {video_path}")
+    
     
     
     
@@ -437,18 +432,21 @@ class InteractiveVideoApp:
             self.play_video()
     
     def hide_skip_button(self):
-        """Hide the skip interruption button if it exists."""
-        if self.skip_button and self.skip_button.winfo_exists():
+        """Hide the skip button if it exists."""
+        if self.skip_button:
             self.skip_button.place_forget()
-            print("[DEBUG] Skip button hidden.")
+    
     
     
     
     def ensure_skip_button(self):
-        """Show the skip button only if an interruption is active."""
-        if self.skip_button and not self.skip_button.winfo_ismapped():
-            self.skip_button.place(relx=0.85, rely=0.9)  # Position near bottom-right
-            print("[DEBUG] Skip button shown.")
+        """Ensure the skip button is created and visible."""
+        if not self.skip_button:
+            self.skip_button = tk.Button(self.control_frame, text="Skip Interruption", command=self.skip_interrupt)
+            self.skip_button.place(relx=0.85, rely=0.9)  # Adjust placement as needed
+        else:
+            self.skip_button.place(relx=0.85, rely=0.9)  # Ensure it's visible
+    
     
     
     def skip_interrupt(self):
