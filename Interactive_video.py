@@ -62,7 +62,9 @@ class InteractiveVideoApp:
         
         # Video frame inside the container where VLC will render the video
         self.video_frame = tk.Frame(self.video_container, bg='black')
-        self.video_frame.pack(fill=tk.BOTH, expand=True)
+        self.video_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.video_frame.lower()  # Send the video frame to the back
+        
         
         # Initialize skip_button attribute
         self.skip_button = None  
@@ -143,45 +145,31 @@ class InteractiveVideoApp:
     
 
     def show_cq_options_overlay(self):
-        """Display the continue/question overlay after video ends."""
-        print("[DEBUG] Triggered show_cq_options_overlay()")
+        """Display the continue/question overlay above the video."""
         self.clear_all_overlays()
     
-        # Calculate size dynamically based on choices
+        # Create or lift the overlay frame
+        if not hasattr(self, 'cq_options_frame'):
+            self.cq_options_frame = tk.Frame(self.video_container, bg='white', opacity=0.8)
+        self.cq_options_frame.place(relx=0.5, rely=0.5, anchor='center')
+        self.cq_options_frame.lift()  # Bring the overlay to the front
+    
+        # Populate choices from YAML config
         options_data = self.config.get("options", {}).get(self.current_video, {})
         choices = options_data.get("choices", {})
-        num_choices = len([opt for opt in choices.items() if not opt[1].get("temporary", False)])
     
-        frame_width = max(300, 300 * num_choices)
-        frame_height = 200  # Increased height to prevent squishing
+        for widget in self.cq_options_frame.winfo_children():
+            widget.destroy()  # Clear previous buttons
     
-        vc_width = self.video_container.winfo_width()
-        vc_height = self.video_container.winfo_height()
-        pos_x = (vc_width - frame_width) // 2
-        pos_y = int(vc_height * 0.6)
+        for text, option in choices.items():
+            if not option.get("temporary", False):  # Only show non-temporary choices
+                button = tk.Button(self.cq_options_frame, text=text, command=lambda opt=option: self.handle_choice(opt))
+                button.pack(padx=10, pady=5)
     
-        # Draw semi-transparent background
-        self.cq_options_frame.place(x=pos_x, y=pos_y, width=frame_width, height=frame_height)
-        self.cq_options_frame.delete("all")  # Clear previous drawings
-        self.cq_options_frame.create_rectangle(
-            0, 0, frame_width, frame_height,
-            fill="#000000", stipple="gray50", outline=""
-        )
-        print("[DEBUG] Drawing overlay rectangle for cq_options_frame")
+        # Ensure the overlay is visible
+        self.cq_options_frame.update_idletasks()
+        self.cq_options_frame.lift()
     
-        # Populate choices
-        button_frame = tk.Frame(self.cq_options_frame, bg='white')
-        button_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
-        print(f"[DEBUG] Loaded choices: {choices}")
-    
-        for idx, (text, option) in enumerate(choices.items()):
-            if not option.get("temporary", False):
-                print(f"[DEBUG] Creating button for choice: {text}")
-                button = self.create_option_button(button_frame, text, option)
-                button.grid(row=0, column=idx, padx=10, pady=10)
-    
-        # Reveal the overlay after setup
-        self.root.after(100, self._reveal_cq_overlay)
         
     
     
