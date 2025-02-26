@@ -151,8 +151,9 @@ class InteractiveVideoApp:
         # Create or lift the overlay frame
         if not hasattr(self, 'cq_options_frame'):
             self.cq_options_frame = tk.Frame(self.video_container, bg='white', opacity=0.8)
-        self.cq_options_frame.place(relx=0.5, rely=0.5, anchor='center')
-        self.cq_options_frame.lift()  # Bring the overlay to the front
+        self.cq_options_frame.place_forget()  # Hide overlay initially
+        self.root.after(100, lambda: self.cq_options_frame.place(relx=0.5, rely=0.5, anchor='center'))
+        self.cq_options_frame.tag_raise("overlay")  # Ensure the overlay is brought forward
     
         # Populate choices from YAML config
         options_data = self.config.get("options", {}).get(self.current_video, {})
@@ -258,15 +259,16 @@ class InteractiveVideoApp:
             self.interrupt_bg = None
     
     def clear_all_overlays(self):
-        """Clear all overlays from the video player."""
+        """Clear all overlays, but only when appropriate."""
         print("[DEBUG] Clearing all overlays.")
     
-        # Clear Continue/Question overlay
-        if self.cq_options_frame:
-            self.cq_options_frame.place_forget()
-            print("[DEBUG] Hiding cq_options_frame.")
+        # Prevent clearing continue/question overlay if video just ended
+        if self.player.get_state() not in [vlc.State.Ended, vlc.State.Error]:
+            if self.cq_options_frame:
+                self.cq_options_frame.place_forget()
+                print("[DEBUG] Hiding cq_options_frame.")
     
-        # Clear interrupt overlays
+        # Always clear interrupt overlays
         if self.interrupt_fg:
             self.interrupt_fg.place_forget()
             self.interrupt_fg = None
@@ -276,6 +278,7 @@ class InteractiveVideoApp:
             self.interrupt_bg.place_forget()
             self.interrupt_bg = None
             print("[DEBUG] Hiding interrupt_bg.")
+    
        
 
     
